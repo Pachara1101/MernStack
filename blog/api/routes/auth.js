@@ -1,6 +1,8 @@
 const router = require("express").Router()
 const User = require("../model/User")
+const bcrypt = require("bcrypt")
 
+// Register
 router.post("/register", async(req, res) => {
     try {
         const salt = await bcrypt.genSalt(10)
@@ -14,6 +16,28 @@ router.post("/register", async(req, res) => {
 
         const user = await newUser.save()
         res.status(200).json(user)
+    } catch(err) {
+        res.status(500).json(err)
+    }
+})
+
+// Login
+router.post("/login", async(req, res) => {
+    try{
+        const user = await User.findOne({username: req.body.username})
+
+        // if no user
+        !user && res.status(400).json("No User!")
+
+        // if same user then compare password
+        const validate = await bcrypt.compare(req.body.password, user.password)
+
+        // if not validate
+        !validate && res.status(400).json("Wrong Credentils!")
+
+        const {password, ...other} = user._doc
+        res.status(200).json(other)
+
     } catch(err) {
         res.status(500).json(err)
     }
